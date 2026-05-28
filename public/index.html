@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuraStay | Premium Hotel Booking Experience</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Toast Notification System -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo">
+        <i class="fa-solid fa-hotel logo-icon"></i>
+        <span>Aura<span class="highlight">Stay</span></span>
+      </div>
+      <nav class="nav-menu" id="nav-menu">
+        <a href="#" class="nav-link active" id="nav-rooms-btn"><i class="fa-solid fa-compass"></i> Explore Available Rooms</a>
+        <a href="#" class="nav-link" id="nav-bookings-btn"><i class="fa-solid fa-list-check"></i> Booking List</a>
+      </nav>
+      <div class="user-menu" id="user-menu">
+        <!-- Will show profile or login buttons dynamically -->
+        <button class="btn btn-outline" id="auth-trigger-btn"><i class="fa-solid fa-right-to-bracket"></i> Sign In</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero-section" id="hero-section">
+    <div class="hero-slides">
+      <div class="hero-slide slide-1"></div>
+      <div class="hero-slide slide-2"></div>
+      <div class="hero-slide slide-3"></div>
+    </div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <h1 class="hero-title">Experience Absolute Luxury & Comfort</h1>
+      <p class="hero-subtitle">Discover room availabilities in real-time, book instantly, and experience top-tier hospitality with AuraStay.</p>
+    </div>
+  </section>
+
+  <main class="main-container">
+
+    <!-- Auth Modal Section (Displays when not authenticated and trying to book/manage) -->
+    <div class="modal-overlay hidden" id="auth-modal">
+      <div class="modal-card auth-card">
+        <button class="modal-close-btn" id="auth-close-btn">&times;</button>
+        <div class="auth-header">
+          <div class="auth-logo">
+            <i class="fa-solid fa-hotel"></i>
+            <span>Aura<span class="highlight">Stay</span></span>
+          </div>
+          <h2 id="auth-title">Welcome to AuraStay</h2>
+          <p id="auth-subtitle">Sign in to search availability and manage your reservations.</p>
+        </div>
+
+        <!-- Auth Forms -->
+        <div class="auth-body">
+          <div class="tab-control">
+            <button class="tab-btn active" id="tab-login">Login</button>
+            <button class="tab-btn" id="tab-register">Register</button>
+          </div>
+
+          <form id="auth-form" class="auth-form">
+            <div class="form-group">
+              <label for="auth-username">Username</label>
+              <div class="input-wrapper">
+                <i class="fa-solid fa-user input-icon"></i>
+                <input type="text" id="auth-username" required placeholder="Enter username">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="auth-password">Password</label>
+              <div class="input-wrapper">
+                <i class="fa-solid fa-lock input-icon"></i>
+                <input type="password" id="auth-password" required placeholder="Enter password">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block btn-loading" id="auth-submit-btn">
+              <span>Sign In</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking Modal (Displays input fields for Guest name, stay summary, and price calculations) -->
+    <div class="modal-overlay hidden" id="booking-modal">
+      <div class="modal-card booking-card">
+        <button class="modal-close-btn" id="booking-close-btn">&times;</button>
+        <h2 class="modal-title"><i class="fa-solid fa-feather-pointed text-primary"></i> Confirm Reservation</h2>
+        <p class="modal-subtitle">Review your booking dates and finalize stay details.</p>
+
+        <div class="booking-modal-body">
+          <!-- Room Preview Card -->
+          <div class="room-preview-container" id="modal-room-preview">
+            <!-- Dynamically populated room data -->
+          </div>
+
+          <form id="booking-form" class="booking-form-element">
+            <input type="hidden" id="booking-room-id">
+            
+            <div class="form-group">
+              <label for="booking-guest-name">Guest Full Name</label>
+              <div class="input-wrapper">
+                <i class="fa-solid fa-id-card input-icon"></i>
+                <input type="text" id="booking-guest-name" required placeholder="e.g. John Doe">
+              </div>
+            </div>
+
+            <!-- Calculated Summary Box -->
+            <div class="pricing-summary-box">
+              <h3>Reservation Summary</h3>
+              <div class="summary-line">
+                <span>Check-In Date</span>
+                <span id="summary-check-in">-</span>
+              </div>
+              <div class="summary-line">
+                <span>Check-Out Date</span>
+                <span id="summary-check-out">-</span>
+              </div>
+              <div class="summary-line">
+                <span>Total Stay Duration</span>
+                <span id="summary-duration">-</span>
+              </div>
+              <div class="summary-line">
+                <span>Rate Per Night</span>
+                <span id="summary-rate">-</span>
+              </div>
+              <hr class="summary-divider">
+              <div class="summary-line grand-total">
+                <span>Estimated Total Price</span>
+                <span id="summary-total" class="highlight">-</span>
+              </div>
+            </div>
+
+            <div class="booking-actions">
+              <button type="button" class="btn btn-outline" id="booking-cancel-btn">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="booking-confirm-btn">Confirm & Book Room</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN VIEW: Rooms Availability and Catalog -->
+    <div id="view-rooms" class="app-view">
+      
+      <!-- Search Form Widget -->
+      <section class="search-widget-section">
+        <div class="search-widget-card">
+          <form id="availability-search-form" class="search-form-grid">
+            <div class="search-field">
+              <label for="search-check-in"><i class="fa-regular fa-calendar-plus field-icon"></i> Check-in Date</label>
+              <input type="date" id="search-check-in" required min="2026-05-29">
+            </div>
+            <div class="search-field">
+              <label for="search-check-out"><i class="fa-regular fa-calendar-minus field-icon"></i> Check-out Date</label>
+              <input type="date" id="search-check-out" required min="2026-05-30">
+            </div>
+            <div class="search-field">
+              <label for="search-room-type"><i class="fa-solid fa-list field-icon"></i> Room Category</label>
+              <select id="search-room-type">
+                <option value="All">All Categories</option>
+                <option value="Single">Single Cozy</option>
+                <option value="Double">Double Deluxe</option>
+                <option value="Executive">Executive Suite</option>
+                <option value="Presidential">Presidential Penthouse</option>
+              </select>
+            </div>
+            <div class="search-submit">
+              <button type="submit" class="btn btn-primary btn-block search-btn"><i class="fa-solid fa-magnifying-glass"></i> Check Availability</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Rooms Availability Status Headline -->
+      <section class="results-header-section">
+        <div class="section-title-wrapper">
+          <h2 class="section-title" id="room-results-title">Available Accommodations</h2>
+          <p class="section-description" id="room-results-subtitle">Search for dates to see real-time availability of rooms and rates.</p>
+        </div>
+      </section>
+
+      <!-- Rooms Catalog Grid -->
+      <section class="rooms-grid-section">
+        <div class="rooms-grid" id="rooms-container">
+          <!-- Room cards will be inserted here dynamically -->
+          <div class="loading-state">
+            <i class="fa-solid fa-circle-notch fa-spin spinner"></i>
+            <p>Loading available rooms...</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- MY BOOKINGS VIEW -->
+    <div id="view-bookings" class="app-view hidden">
+      <div class="section-title-wrapper">
+        <h2 class="section-title" id="bookings-results-title"><i class="fa-solid fa-clock-rotate-left text-primary"></i> Your Bookings Portfolio</h2>
+        <p class="section-description" id="bookings-results-subtitle">Manage and review your active and past reservations.</p>
+      </div>
+
+      <div class="bookings-list-container" id="bookings-container">
+        <!-- Bookings list will be rendered here dynamically -->
+        <div class="loading-state">
+          <i class="fa-solid fa-circle-notch fa-spin spinner"></i>
+          <p>Retrieving your bookings...</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <p>&copy; 2026 AuraStay Hotels & Resorts. Built for luxury. Powered by sqlite3.</p>
+      
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
