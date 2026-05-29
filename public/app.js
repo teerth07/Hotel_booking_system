@@ -49,8 +49,24 @@ const navBookingsBtn = document.getElementById('nav-bookings-btn');
 const userMenu = document.getElementById('user-menu');
 const toastContainer = document.getElementById('toast-container');
 
-// Auth Mode
+// Secure QR Payment DOM Elements
+const paymentModal = document.getElementById('payment-modal');
+const paymentCloseBtn = document.getElementById('payment-close-btn');
+const paymentCancelBtn = document.getElementById('payment-cancel-btn');
+const paymentCompleteBtn = document.getElementById('payment-complete-btn');
+const qrCodeContainer = document.getElementById('qr-code-container');
+const paymentRef = document.getElementById('payment-ref');
+const paymentRoomInfo = document.getElementById('payment-room-info');
+const paymentAmount = document.getElementById('payment-amount');
+const timerProgress = document.getElementById('timer-progress');
+const timerText = document.getElementById('timer-text');
+const paymentSuccessOverlay = document.getElementById('payment-success-overlay');
+
+// Auth & Payment Timer Mode
 let isRegisterMode = false;
+let paymentTimer = null;
+let currentBookingData = null;
+
 
 // Initialize App
 document.addEventListener('DOMContentLoaded', async () => {
@@ -144,6 +160,11 @@ function bindEvents() {
   bookingCloseBtn.addEventListener('click', closeBookingModal);
   bookingCancelBtn.addEventListener('click', closeBookingModal);
   bookingForm.addEventListener('submit', handleBookingSubmit);
+
+  // Payment Modal
+  paymentCloseBtn.addEventListener('click', closePaymentModal);
+  paymentCancelBtn.addEventListener('click', closePaymentModal);
+  paymentCompleteBtn.addEventListener('click', handlePaymentComplete);
 
   // Search Submit
   searchForm.addEventListener('submit', (e) => {
@@ -478,46 +499,187 @@ function closeBookingModal() {
 async function handleBookingSubmit(e) {
   e.preventDefault();
   
-  const room_id = parseInt(bookingRoomIdInput.value);
-  const guest_name = bookingGuestNameInput.value;
-  const check_in_date = state.searchParams.checkIn;
-  const check_out_date = state.searchParams.checkOut;
+  const roomId = parseInt(bookingRoomIdInput.value);
+  const guestName = bookingGuestNameInput.value;
+  const room = state.rooms.find(r => r.id == roomId);
   
-  const confirmBtn = document.getElementById('booking-confirm-btn');
-  confirmBtn.disabled = true;
-  confirmBtn.textContent = 'Processing...';
-
-  try {
-    const response = await fetch('/api/bookings', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${state.token}`
-      },
-      body: JSON.stringify({ room_id, guest_name, check_in_date, check_out_date })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to complete booking.');
-    }
-
-    showToast('Reservation confirmed successfully!', 'success');
-    closeBookingModal();
-    
-    // Switch to booking history page
-    showView('bookings');
-    fetchUserBookings();
-    
-    // Re-trigger rooms inventory search to exclude the now-booked room
-    performRoomSearch();
-  } catch (error) {
-    showToast(error.message, 'danger');
-  } finally {
-    confirmBtn.disabled = false;
-    confirmBtn.textContent = 'Confirm & Book Room';
+  if (!room) {
+    showToast('Room details missing.', 'danger');
+    return;
   }
+
+  // Calculate pricing
+  const checkIn = new Date(state.searchParams.checkIn);
+  const checkOut = new Date(state.searchParams.checkOut);
+  const diffTime = Math.abs(checkOut - checkIn);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const totalCost = diffDays * room.price_per_night;
+
+  // Temporarily hide the booking modal while paying
+  bookingModal.classList.add('hidden');
+
+  // Open the payment gateway modal
+  openPaymentModal(room, guestName, totalCost);
+}
+
+// ==================== PAYMENT MODAL LOGIC ====================
+
+function openPaymentModal(room, guestName, totalCost) {
+  // Generate random reference
+  const ref = 'ASTY' + Math.floor(100000 + Math.random() * 900000);
+  
+  // Save active booking info
+  currentBookingData = {
+    room_id: room.id,
+    guest_name: guestName,
+    check_in_date: state.searchParams.checkIn,
+    check_out_date: state.searchParams.checkOut,
+    totalCost: totalCost,
+    ref: ref
+  };
+
+  // Populate info in Payment Modal
+  paymentRef.textContent = ref;
+  paymentRoomInfo.textContent = `${room.room_type} (Room ${room.room_number})`;
+  paymentAmount.textContent = `$${totalCost}`;
+
+  // Clear previous QR Code if any
+  qrCodeContainer.innerHTML = '';
+
+  // Generate UPI QR Code
+  const upiUri = `upi://pay?pa=aurastay@upi&pn=AuraStay%20Hotels&am=${totalCost}&cu=USD&tn=AuraStay-Ref-${ref}`;
+  
+  try {
+    QRCode.toCanvas(upiUri, {
+      width: 180,
+      margin: 1,
+      color: {
+        dark: '#0d111a',  // very dark background matching our theme
+        light: '#ffffff'  // white background for scannability
+      }
+    }, function (err, canvas) {
+      if (err) {
+        console.error(err);
+        qrCodeContainer.innerHTML = `<p class="text-danger">Failed to generate QR Code</p>`;
+      } else {
+        qrCodeContainer.appendChild(canvas);
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    qrCodeContainer.innerHTML = `<p class="text-danger">Failed to load QR generator</p>`;
+  }
+
+  // Ensure timer controls and overlay are reset
+  paymentSuccessOverlay.classList.add('hidden');
+  timerText.classList.remove('warning');
+  timerProgress.classList.remove('warning');
+
+  // Open modal
+  paymentModal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+
+  // Start 5 minute timer (300 seconds)
+  startPaymentTimer(300);
+}
+
+function startPaymentTimer(durationSeconds) {
+  if (paymentTimer) clearInterval(paymentTimer);
+
+  let timeLeft = durationSeconds;
+  const initialOffset = 163.36; // matches stroke-dasharray
+
+  const updateTimerDisplay = () => {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    timerText.textContent = `${minutes}:${String(seconds).padStart(2, '0')}`;
+
+    // Update circular progress SVG offset
+    const progressOffset = initialOffset - (timeLeft / durationSeconds) * initialOffset;
+    timerProgress.style.strokeDashoffset = progressOffset;
+
+    // Visual warning when less than 1 minute remains
+    if (timeLeft <= 60) {
+      timerText.classList.add('warning');
+      timerProgress.classList.add('warning');
+    }
+  };
+
+  updateTimerDisplay();
+
+  paymentTimer = setInterval(() => {
+    timeLeft--;
+    if (timeLeft <= 0) {
+      clearInterval(paymentTimer);
+      showToast('Payment window has expired. Please try booking again.', 'danger');
+      closePaymentModal();
+    } else {
+      updateTimerDisplay();
+    }
+  }, 1000);
+}
+
+function closePaymentModal() {
+  if (paymentTimer) clearInterval(paymentTimer);
+  paymentModal.classList.add('hidden');
+  // If we closed the payment modal but booking modal is open, reset document body overflow only if booking modal is also closed
+  if (bookingModal.classList.contains('hidden')) {
+    document.body.style.overflow = '';
+  }
+  currentBookingData = null;
+}
+
+async function handlePaymentComplete() {
+  if (!currentBookingData) return;
+
+  // Disable button to prevent double-click
+  paymentCompleteBtn.disabled = true;
+
+  // Show Success Overlay and play checkmark animation
+  paymentSuccessOverlay.classList.remove('hidden');
+
+  // Simulate verification network delay (2 seconds)
+  setTimeout(async () => {
+    try {
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${state.token}`
+        },
+        body: JSON.stringify({
+          room_id: currentBookingData.room_id,
+          guest_name: currentBookingData.guest_name,
+          check_in_date: currentBookingData.check_in_date,
+          check_out_date: currentBookingData.check_out_date
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to complete booking.');
+      }
+
+      showToast('Reservation confirmed and payment successfully captured!', 'success');
+      
+      // Close all modals
+      closePaymentModal();
+      closeBookingModal();
+
+      // Switch to booking list and update list
+      showView('bookings');
+      fetchUserBookings();
+
+      // Refresh availability list
+      performRoomSearch();
+    } catch (error) {
+      showToast(error.message, 'danger');
+      paymentSuccessOverlay.classList.add('hidden');
+    } finally {
+      paymentCompleteBtn.disabled = false;
+    }
+  }, 2000);
 }
 
 // ==================== BOOKINGS PORTFOLIO ====================
@@ -577,7 +739,12 @@ function renderBookings(bookings) {
 
     let statusHtml = `<span class="booking-item-status status-booked">Confirmed</span>`;
     if (booking.status === 'cancelled') {
-      statusHtml = `<span class="booking-item-status status-cancelled">Cancelled</span>`;
+      statusHtml = `
+        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+          <span class="booking-item-status status-cancelled">Cancelled</span>
+          <span style="font-size: 0.75rem; color: var(--success); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-rotate-left"></i> Refunded 100%</span>
+        </div>
+      `;
     }
 
     return `
@@ -633,7 +800,7 @@ async function cancelBooking(bookingId) {
       throw new Error(data.error || 'Failed to cancel the booking.');
     }
 
-    showToast('Your reservation has been successfully cancelled.', 'success');
+    showToast(`Reservation cancelled successfully! Refund of $${data.refundAmount} has been processed back to your original payment method (UPI Transaction ID: ${data.refundReference}).`, 'success');
     fetchUserBookings();
     
     // Re-trigger rooms inventory search to release the room on search view

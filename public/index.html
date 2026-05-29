@@ -146,9 +146,101 @@
 
             <div class="booking-actions">
               <button type="button" class="btn btn-outline" id="booking-cancel-btn">Cancel</button>
-              <button type="submit" class="btn btn-primary" id="booking-confirm-btn">Confirm & Book Room</button>
+              <button type="submit" class="btn btn-primary" id="booking-confirm-btn"><i class="fa-solid fa-credit-card"></i> Proceed to Pay</button>
             </div>
           </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Gateway Modal -->
+    <div class="modal-overlay hidden" id="payment-modal">
+      <div class="modal-card payment-card">
+        <button class="modal-close-btn" id="payment-close-btn">&times;</button>
+        
+        <!-- Payment Header -->
+        <div class="payment-header">
+          <div class="payment-logo">
+            <i class="fa-solid fa-shield-halved"></i>
+            <span>Secure Payment</span>
+          </div>
+          <h2 class="modal-title"><i class="fa-solid fa-qrcode text-primary"></i> Scan & Pay</h2>
+          <p class="modal-subtitle">Scan the QR code below with any UPI app to complete your payment.</p>
+        </div>
+
+        <!-- Payment Body -->
+        <div class="payment-body">
+          <!-- QR Code Section -->
+          <div class="qr-code-wrapper">
+            <div class="qr-glow-ring"></div>
+            <div class="qr-code-container" id="qr-code-container"></div>
+            <div class="qr-scan-line"></div>
+          </div>
+
+          <!-- Payment Info -->
+          <div class="payment-info-card">
+            <div class="payment-info-row">
+              <span class="payment-label">Pay To</span>
+              <span class="payment-value">AuraStay Hotels & Resorts</span>
+            </div>
+            <div class="payment-info-row">
+              <span class="payment-label">UPI ID</span>
+              <span class="payment-value upi-id">aurastay@upi</span>
+            </div>
+            <div class="payment-info-row">
+              <span class="payment-label">Booking Ref</span>
+              <span class="payment-value" id="payment-ref">-</span>
+            </div>
+            <div class="payment-info-row">
+              <span class="payment-label">Room</span>
+              <span class="payment-value" id="payment-room-info">-</span>
+            </div>
+            <hr class="summary-divider">
+            <div class="payment-info-row payment-total-row">
+              <span class="payment-label">Total Amount</span>
+              <span class="payment-value payment-amount" id="payment-amount">$0</span>
+            </div>
+          </div>
+
+          <!-- Timer -->
+          <div class="payment-timer-section">
+            <div class="timer-ring">
+              <svg class="timer-svg" viewBox="0 0 60 60">
+                <circle class="timer-track" cx="30" cy="30" r="26"></circle>
+                <circle class="timer-progress" id="timer-progress" cx="30" cy="30" r="26"></circle>
+              </svg>
+              <div class="timer-text" id="timer-text">5:00</div>
+            </div>
+            <p class="timer-label">Payment window expires in</p>
+          </div>
+
+          <!-- UPI Apps Hint -->
+          <div class="upi-apps-hint">
+            <span>Pay using</span>
+            <div class="upi-icons">
+              <i class="fa-brands fa-google-pay"></i>
+              <i class="fa-solid fa-mobile-screen-button"></i>
+              <i class="fa-solid fa-wallet"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Actions -->
+        <div class="payment-actions">
+          <button type="button" class="btn btn-outline" id="payment-cancel-btn"><i class="fa-solid fa-xmark"></i> Cancel Payment</button>
+          <button type="button" class="btn btn-primary btn-success-glow" id="payment-complete-btn"><i class="fa-solid fa-check-circle"></i> I've Completed Payment</button>
+        </div>
+
+        <!-- Payment Success Overlay (hidden by default) -->
+        <div class="payment-success-overlay hidden" id="payment-success-overlay">
+          <div class="success-animation">
+            <svg class="checkmark-svg" viewBox="0 0 100 100">
+              <circle class="checkmark-circle" cx="50" cy="50" r="45" />
+              <path class="checkmark-check" d="M30 50 L45 65 L70 35" />
+            </svg>
+            <h3 class="success-title">Payment Successful!</h3>
+            <p class="success-subtitle">Your reservation is being confirmed...</p>
+          </div>
         </div>
       </div>
     </div>
@@ -232,6 +324,7 @@
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

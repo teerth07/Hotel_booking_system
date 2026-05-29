@@ -1097,3 +1097,381 @@ h1, h2, h3, h4, h5, h6 {
     text-align: center;
   }
 }
+
+/* ==================== PAYMENT GATEWAY MODAL ==================== */
+
+.payment-card {
+  max-width: 520px;
+  width: 95%;
+  max-height: 92vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.payment-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.payment-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, var(--primary-light), transparent);
+  border: 1px solid var(--primary-glow);
+  padding: 0.4rem 1rem;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 1rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.payment-logo i {
+  font-size: 0.9rem;
+}
+
+/* QR Code Wrapper */
+.qr-code-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1.5rem auto;
+  width: 220px;
+  height: 220px;
+}
+
+.qr-glow-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: var(--border-radius-md);
+  background: conic-gradient(
+    from 0deg,
+    var(--primary),
+    var(--accent),
+    var(--primary),
+    transparent,
+    var(--primary)
+  );
+  opacity: 0.4;
+  animation: qrGlowSpin 4s linear infinite;
+  z-index: 0;
+}
+
+@keyframes qrGlowSpin {
+  to { transform: rotate(360deg); }
+}
+
+.qr-code-container {
+  position: relative;
+  z-index: 1;
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 30px rgba(0,0,0,0.4);
+}
+
+.qr-code-container canvas {
+  display: block;
+  border-radius: 4px;
+}
+
+.qr-scan-line {
+  position: absolute;
+  z-index: 2;
+  width: 180px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary), var(--accent), var(--primary), transparent);
+  box-shadow: 0 0 12px var(--primary-glow);
+  animation: qrScanMove 2.5s ease-in-out infinite;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+@keyframes qrScanMove {
+  0%, 100% { top: 20px; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  50% { top: 195px; }
+}
+
+/* Payment Info Card */
+.payment-info-card {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: 1rem 1.2rem;
+  margin: 1.2rem 0;
+}
+
+.payment-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.55rem 0;
+}
+
+.payment-label {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-family: var(--font-body);
+}
+
+.payment-value {
+  color: var(--text-main);
+  font-weight: 600;
+  font-size: 0.85rem;
+  font-family: var(--font-body);
+  text-align: right;
+}
+
+.payment-value.upi-id {
+  color: var(--accent);
+  font-family: 'Courier New', monospace;
+  letter-spacing: 0.5px;
+}
+
+.payment-total-row {
+  padding-top: 0.7rem;
+}
+
+.payment-total-row .payment-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.payment-amount {
+  font-size: 1.4rem !important;
+  font-weight: 800 !important;
+  font-family: var(--font-heading) !important;
+  color: var(--primary) !important;
+  text-shadow: 0 0 20px var(--primary-glow);
+}
+
+/* Timer Section */
+.payment-timer-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.2rem 0;
+}
+
+.timer-ring {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timer-svg {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.timer-track {
+  fill: none;
+  stroke: var(--bg-input);
+  stroke-width: 3;
+}
+
+.timer-progress {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 163.36;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1s linear, stroke 0.5s ease;
+  filter: drop-shadow(0 0 4px var(--primary-glow));
+}
+
+.timer-progress.warning {
+  stroke: var(--danger);
+  filter: drop-shadow(0 0 6px var(--danger-glow));
+}
+
+.timer-text {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  z-index: 1;
+}
+
+.timer-text.warning {
+  color: var(--danger);
+  animation: timerPulse 1s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.timer-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 500;
+}
+
+/* UPI Apps Hint */
+.upi-apps-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.upi-icons {
+  display: flex;
+  gap: 0.7rem;
+}
+
+.upi-icons i {
+  font-size: 1.3rem;
+  color: var(--text-muted);
+  transition: color var(--transition-fast);
+}
+
+.upi-icons i:hover {
+  color: var(--primary);
+}
+
+/* Payment Actions */
+.payment-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.2rem;
+}
+
+.payment-actions .btn {
+  flex: 1;
+}
+
+.btn-success-glow {
+  animation: successBtnGlow 2s ease-in-out infinite;
+}
+
+@keyframes successBtnGlow {
+  0%, 100% { box-shadow: 0 0 8px var(--primary-glow); }
+  50% { box-shadow: 0 0 22px var(--primary-glow), 0 0 40px rgba(var(--primary-hue), 70%, 52%, 0.15); }
+}
+
+/* Payment Success Overlay */
+.payment-success-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 10, 18, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  border-radius: var(--border-radius-lg);
+}
+
+.payment-success-overlay.hidden {
+  display: none;
+}
+
+.success-animation {
+  text-align: center;
+  animation: successFadeIn 0.5s ease-out;
+}
+
+@keyframes successFadeIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.checkmark-svg {
+  width: 110px;
+  height: 110px;
+  margin-bottom: 1.5rem;
+}
+
+.checkmark-circle {
+  fill: none;
+  stroke: var(--success);
+  stroke-width: 3;
+  stroke-dasharray: 283;
+  stroke-dashoffset: 283;
+  animation: circleStroke 0.6s ease-out 0.2s forwards;
+  filter: drop-shadow(0 0 10px hsla(145, 65%, 45%, 0.4));
+}
+
+@keyframes circleStroke {
+  to { stroke-dashoffset: 0; }
+}
+
+.checkmark-check {
+  fill: none;
+  stroke: var(--success);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 80;
+  stroke-dashoffset: 80;
+  animation: checkStroke 0.4s ease-out 0.7s forwards;
+  filter: drop-shadow(0 0 8px hsla(145, 65%, 45%, 0.5));
+}
+
+@keyframes checkStroke {
+  to { stroke-dashoffset: 0; }
+}
+
+.success-title {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--success);
+  margin-bottom: 0.3rem;
+}
+
+.success-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* Payment Modal Responsive */
+@media (max-width: 540px) {
+  .payment-card {
+    width: 98%;
+    padding: 1.2rem;
+  }
+
+  .qr-code-wrapper {
+    width: 180px;
+    height: 180px;
+  }
+
+  .qr-scan-line {
+    width: 150px;
+  }
+
+  .payment-actions {
+    flex-direction: column;
+  }
+
+  .payment-amount {
+    font-size: 1.2rem !important;
+  }
+}
